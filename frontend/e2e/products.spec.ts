@@ -6,6 +6,44 @@ test.describe('Products CRUD', () => {
     await expect(page.locator('h1')).toContainText('Catalog intake');
   });
 
+  test('paginates products and supports search', async ({ authedPage: page }) => {
+    await page.click('[href="/products"]');
+
+    // Create several products to verify pagination controls / search
+    const skus: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      const sku = uniqueSku();
+      skus.push(sku);
+      await page.fill('#sku', sku);
+      await page.fill('#name', `PagProd-${sku}`);
+      await page.fill('#price', '10');
+      await page.fill('#gst-rate', '5');
+      await page.click('button:has-text("Create product")');
+      await expectSuccess(page, 'Product created');
+    }
+
+    // All should be visible when searched
+    for (const sku of skus) {
+      await page.fill('#product-search', sku);
+      await page.waitForTimeout(500);
+      await expect(page.locator('.table-row', { hasText: sku })).toBeVisible();
+    }
+
+    // Search should filter products
+    await page.fill('#product-search', `PagProd-${skus[0]}`);
+    await page.waitForTimeout(500);
+    await expect(page.locator('.table-row', { hasText: skus[0] })).toBeVisible();
+    // Other products should not be visible
+    await expect(page.locator('.table-row', { hasText: skus[1] })).not.toBeVisible();
+
+    // Clear search — should show the first product when searched again
+    await page.fill('#product-search', '');
+    await page.waitForTimeout(500);
+    await page.fill('#product-search', skus[1]);
+    await page.waitForTimeout(500);
+    await expect(page.locator('.table-row', { hasText: skus[1] })).toBeVisible();
+  });
+
   test('creates a new product', async ({ authedPage: page }) => {
     await page.click('[href="/products"]');
     const sku = uniqueSku();
@@ -21,6 +59,8 @@ test.describe('Products CRUD', () => {
     await expectSuccess(page, 'Product created successfully');
 
     // Verify product appears in the list
+    await page.fill('#product-search', sku);
+    await page.waitForTimeout(500);
     const row = page.locator('.table-row', { hasText: sku });
     await expect(row).toBeVisible();
     await expect(row.locator('strong')).toContainText(`Test Product ${sku}`);
@@ -60,7 +100,10 @@ test.describe('Products CRUD', () => {
     await expectSuccess(page, 'Product created');
 
     // Click Edit on the new product row
+    await page.fill('#product-search', sku);
+    await page.waitForTimeout(500);
     const row = page.locator('.table-row', { hasText: sku });
+    await expect(row).toBeVisible({ timeout: 10_000 });
     await row.locator('button:has-text("Edit")').click();
 
     // Form should show "Editing product" heading
@@ -90,7 +133,10 @@ test.describe('Products CRUD', () => {
     await expectSuccess(page, 'Product created');
 
     // Delete it — accept the confirm dialog and wait for new banner
+    await page.fill('#product-search', sku);
+    await page.waitForTimeout(500);
     const row = page.locator('.table-row', { hasText: sku });
+    await expect(row).toBeVisible({ timeout: 10_000 });
     page.on('dialog', (dialog) => dialog.accept());
     // Wait for old banner to disappear then the new one to appear
     await row.locator('button:has-text("Delete")').click();

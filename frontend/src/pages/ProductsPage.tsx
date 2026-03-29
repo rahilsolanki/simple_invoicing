@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api, { getApiErrorMessage } from '../api/client';
-import type { CompanyProfile, Product, ProductCreate } from '../types/api';
+import type { CompanyProfile, PaginatedProducts, Product, ProductCreate } from '../types/api';
 
 function formatCurrency(value: number, currencyCode = 'USD') {
   try {
@@ -25,6 +25,11 @@ export default function ProductsPage() {
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 20;
   const [form, setForm] = useState({
     sku: '',
     name: '',
@@ -41,10 +46,14 @@ export default function ProductsPage() {
       setLoading(true);
       setError('');
       const [productsRes, companyRes] = await Promise.all([
-        api.get<Product[]>('/products/'),
+        api.get<PaginatedProducts>('/products/', {
+          params: { page, page_size: pageSize, search },
+        }),
         api.get<CompanyProfile>('/company/'),
       ]);
-      setProducts(productsRes.data);
+      setProducts(productsRes.data.items);
+      setTotal(productsRes.data.total);
+      setTotalPages(productsRes.data.total_pages);
       setCompany(companyRes.data);
     } catch (err) {
       setError(getApiErrorMessage(err, 'Unable to load products'));
@@ -55,7 +64,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     void loadProducts();
-  }, []);
+  }, [page, search]);
 
   function resetForm() {
     setForm({ sku: '', name: '', description: '', hsn_sac: '', price: '', gst_rate: '0' });
@@ -143,7 +152,7 @@ export default function ProductsPage() {
           <h1 className="page-title">Catalog intake</h1>
           <p className="section-copy">Create products, keep pricing current, and review the active SKU list.</p>
         </div>
-        <div className="status-chip">{products.length} loaded</div>
+        <div className="status-chip">{total} loaded</div>
       </section>
 
       {error ? <div className="status-banner status-banner--error">{error}</div> : null}
@@ -254,6 +263,21 @@ export default function ProductsPage() {
             </div>
           </div>
 
+          <div className="field">
+            <label htmlFor="product-search">Search by name</label>
+            <input
+              id="product-search"
+              className="input"
+              type="search"
+              placeholder="Type to search products..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+
           <div className="table-list">
             {loading ? <div className="empty-state">Loading products...</div> : null}
             {!loading && products.length === 0 ? <div className="empty-state">No products have been created yet.</div> : null}
@@ -287,6 +311,30 @@ export default function ProductsPage() {
                 ))
               : null}
           </div>
+
+          {totalPages > 1 ? (
+            <div className="button-row" style={{ justifyContent: 'center', paddingTop: '8px' }}>
+              <button
+                type="button"
+                className="button button--ghost"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Previous
+              </button>
+              <span className="muted-text" style={{ alignSelf: 'center' }}>
+                Page {page} of {totalPages}
+              </span>
+              <button
+                type="button"
+                className="button button--ghost"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </button>
+            </div>
+          ) : null}
         </article>
       </section>
     </div>

@@ -39,9 +39,9 @@ export default function DashboardPage() {
         setLoading(true);
         setError('');
         const [productsRes, inventoryRes, invoicesRes, companyRes] = await Promise.all([
-          api.get<Product[]>('/products/'),
+          api.get<{ items: Product[] }>('/products/', { params: { page_size: 100 } }),
           api.get<InventoryRow[]>('/inventory/'),
-          api.get<Invoice[]>('/invoices/'),
+          api.get<{ items: Invoice[] }>('/invoices/', { params: { page_size: 100 } }),
           api.get<CompanyProfile>('/company/'),
         ]);
 
@@ -50,9 +50,9 @@ export default function DashboardPage() {
         }
 
         setState({
-          products: productsRes.data,
+          products: productsRes.data.items,
           inventory: inventoryRes.data,
-          invoices: invoicesRes.data,
+          invoices: invoicesRes.data.items,
         });
         setCompany(companyRes.data);
       } catch (err) {

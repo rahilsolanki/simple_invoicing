@@ -62,7 +62,7 @@ def create_ledger(
 @router.get("/", response_model=PaginatedLedgerOut)
 def list_ledgers(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     search: str = Query(""),
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),

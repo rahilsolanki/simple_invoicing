@@ -24,6 +24,8 @@ test.describe('Ledgers CRUD', () => {
     // Should redirect back to list with success message
     await expect(page.locator('h1')).toContainText('Ledger master', { timeout: 10_000 });
     await expectSuccess(page, 'Ledger created');
+    await page.fill('#ledger-search', name);
+    await page.waitForTimeout(500);
     await expect(page.locator('.table-row', { hasText: name })).toBeVisible();
   });
 
@@ -45,6 +47,8 @@ test.describe('Ledgers CRUD', () => {
 
     await expect(page.locator('h1')).toContainText('Ledger master', { timeout: 10_000 });
     await expectSuccess(page, 'Ledger created');
+    await page.fill('#ledger-search', name);
+    await page.waitForTimeout(500);
     await expect(page.locator('.table-row', { hasText: name })).toBeVisible();
   });
 
@@ -62,8 +66,11 @@ test.describe('Ledgers CRUD', () => {
     await expect(page.locator('h1')).toContainText('Ledger master', { timeout: 10_000 });
     await expectSuccess(page, 'Ledger created');
 
-    // Click Edit
+    // Search and click Edit
+    await page.fill('#ledger-search', name);
+    await page.waitForTimeout(500);
     const row = page.locator('.table-row', { hasText: name });
+    await expect(row).toBeVisible({ timeout: 10_000 });
     await row.locator('button:has-text("Edit")').click();
     await expect(page.locator('h1')).toContainText('Edit ledger', { timeout: 10_000 });
 
@@ -74,6 +81,8 @@ test.describe('Ledgers CRUD', () => {
 
     await expect(page.locator('h1')).toContainText('Ledger master', { timeout: 10_000 });
     await expectSuccess(page, 'Ledger updated');
+    await page.fill('#ledger-search', updatedName);
+    await page.waitForTimeout(500);
     await expect(page.locator('.table-row', { hasText: updatedName })).toBeVisible();
   });
 
@@ -91,8 +100,11 @@ test.describe('Ledgers CRUD', () => {
     await expect(page.locator('h1')).toContainText('Ledger master', { timeout: 10_000 });
     await expectSuccess(page, 'Ledger created');
 
-    // Delete — accept the confirm dialog and wait for new banner
+    // Search, then delete — accept the confirm dialog and wait for new banner
+    await page.fill('#ledger-search', name);
+    await page.waitForTimeout(500);
     const row = page.locator('.table-row', { hasText: name });
+    await expect(row).toBeVisible({ timeout: 10_000 });
     page.on('dialog', (dialog) => dialog.accept());
     await row.locator('button:has-text("Delete")').click();
     await expect(page.locator('.status-banner--success')).toContainText('Ledger deleted', { timeout: 10_000 });
@@ -113,8 +125,11 @@ test.describe('Ledgers CRUD', () => {
     await expect(page.locator('h1')).toContainText('Ledger master', { timeout: 10_000 });
     await expectSuccess(page, 'Ledger created');
 
-    // Click View
+    // Search and click View
+    await page.fill('#ledger-search', name);
+    await page.waitForTimeout(500);
     const row = page.locator('.table-row', { hasText: name });
+    await expect(row).toBeVisible({ timeout: 10_000 });
     await row.locator('button:has-text("View")').click();
 
     // Should navigate to ledger view page
@@ -163,20 +178,16 @@ test.describe('Ledgers CRUD', () => {
     await expect(page.locator('h1')).toContainText('Ledger master', { timeout: 10_000 });
     await expectSuccess(page, 'Ledger created');
 
-    // Both should be visible initially
-    await expect(page.locator('.table-row', { hasText: nameA })).toBeVisible();
-    await expect(page.locator('.table-row', { hasText: nameB })).toBeVisible();
-
-    // Search for Alpha — only Alpha should remain
-    await page.fill('#ledger-search', 'SearchAlpha');
+    // Search for Alpha — should be visible
+    await page.fill('#ledger-search', nameA);
     await page.waitForTimeout(500);
     await expect(page.locator('.table-row', { hasText: nameA })).toBeVisible();
     await expect(page.locator('.table-row', { hasText: nameB })).not.toBeVisible();
 
-    // Clear search — both should be visible again
-    await page.fill('#ledger-search', '');
+    // Search for Beta — should be visible
+    await page.fill('#ledger-search', nameB);
     await page.waitForTimeout(500);
-    await expect(page.locator('.table-row', { hasText: nameA })).toBeVisible();
     await expect(page.locator('.table-row', { hasText: nameB })).toBeVisible();
+    await expect(page.locator('.table-row', { hasText: nameA })).not.toBeVisible();
   });
 });

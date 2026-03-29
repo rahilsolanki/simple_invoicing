@@ -71,6 +71,22 @@ export type PaginatedLedgers = {
   total_pages: number;
 };
 
+export type PaginatedProducts = {
+  items: Product[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+};
+
+export type PaginatedInvoices = {
+  items: Invoice[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+};
+
 export type CompanyProfile = {
   id: number;
   name: string;

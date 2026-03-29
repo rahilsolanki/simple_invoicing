@@ -17,14 +17,14 @@ export default function InventoryPage() {
       setError('');
       const [inventoryRes, productsRes] = await Promise.all([
         api.get<InventoryRow[]>('/inventory/'),
-        api.get<Product[]>('/products/'),
+        api.get<{ items: Product[] }>('/products/', { params: { page_size: 500 } }),
       ]);
 
       setRows(inventoryRes.data);
-      setProducts(productsRes.data);
+      setProducts(productsRes.data.items);
 
-      if (!form.productId && productsRes.data[0]) {
-        setForm((current) => ({ ...current, productId: String(productsRes.data[0].id) }));
+      if (!form.productId && productsRes.data.items[0]) {
+        setForm((current) => ({ ...current, productId: String(productsRes.data.items[0].id) }));
       }
     } catch (err) {
       setError(getApiErrorMessage(err, 'Unable to load inventory'));

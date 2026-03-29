@@ -64,3 +64,11 @@ class InvoiceOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PaginatedInvoiceOut(BaseModel):
+    items: list[InvoiceOut]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

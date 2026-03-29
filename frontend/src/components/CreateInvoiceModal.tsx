@@ -55,12 +55,12 @@ export default function CreateInvoiceModal({
       try {
         setLoading(true);
         const [productsRes, ledgersRes, companyRes] = await Promise.all([
-          api.get<Product[]>('/products/'),
-          api.get<{ items: Ledger[] }>('/ledgers/', { params: { page_size: 100 } }),
+          api.get<{ items: Product[] }>('/products/', { params: { page_size: 500 } }),
+          api.get<{ items: Ledger[] }>('/ledgers/', { params: { page_size: 500 } }),
           api.get<{ currency_code: string | null }>('/company/'),
         ]);
         if (cancelled) return;
-        setProducts(productsRes.data);
+        setProducts(productsRes.data.items);
         setLedgers(ledgersRes.data.items);
         setCurrencyCode(companyRes.data.currency_code || 'INR');
 
@@ -68,7 +68,7 @@ export default function CreateInvoiceModal({
           setSelectedLedgerId(String(ledgersRes.data.items[0].id));
         }
 
-        const defaultProduct = productsRes.data[0];
+        const defaultProduct = productsRes.data.items[0];
         if (defaultProduct) {
           setItems([createItem(1, String(defaultProduct.id), String(defaultProduct.price))]);
         }

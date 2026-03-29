@@ -18,7 +18,10 @@ test.describe('Ledger Statement', () => {
     await expectSuccess(page, 'Ledger created');
 
     // Click View on the created ledger to go to statement page
+    await page.fill('#ledger-search', ledgerName);
+    await page.waitForTimeout(500);
     const row = page.locator('.table-row', { hasText: ledgerName });
+    await expect(row).toBeVisible({ timeout: 10_000 });
     await row.locator('button:has-text("View")').click();
     await expect(page.locator('h1')).toContainText(ledgerName, { timeout: 10_000 });
 
@@ -117,7 +120,10 @@ test.describe('Ledger Statement', () => {
     // 5. Navigate to ledger view page via the list
     await page.click('[href="/ledgers"]');
     await page.waitForTimeout(500);
+    await page.fill('#ledger-search', ledgerName);
+    await page.waitForTimeout(500);
     const ledgerRow = page.locator('.table-row', { hasText: ledgerName });
+    await expect(ledgerRow).toBeVisible({ timeout: 10_000 });
     await ledgerRow.locator('button:has-text("View")').click();
     await expect(page.locator('h1')).toContainText(ledgerName, { timeout: 10_000 });
 

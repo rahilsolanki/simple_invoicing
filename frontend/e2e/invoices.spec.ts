@@ -58,6 +58,58 @@ test.describe('Invoices', () => {
     await expect(page.locator('h1')).toContainText('Invoice composer');
   });
 
+  test('paginates invoices and supports search', async ({ authedPage: page }) => {
+    const { sku, ledgerName } = await seedInvoiceData(page);
+
+    await page.click('[href="/invoices"]');
+    await page.waitForTimeout(500);
+
+    // Create a sales invoice so there's at least one in the list
+    await page.selectOption('#invoice-voucher-type', 'sales');
+
+    const ledgerSelect = page.locator('#invoice-ledger');
+    const ledgerOptions = ledgerSelect.locator('option');
+    const ledgerCount = await ledgerOptions.count();
+    for (let i = 0; i < ledgerCount; i++) {
+      const text = await ledgerOptions.nth(i).textContent();
+      if (text?.includes(ledgerName)) {
+        const val = (await ledgerOptions.nth(i).getAttribute('value')) || '';
+        await ledgerSelect.selectOption(val);
+        break;
+      }
+    }
+
+    const productSelect = page.locator('[id^="invoice-product-"]').first();
+    const prodOptions = productSelect.locator('option');
+    const prodCount = await prodOptions.count();
+    for (let i = 0; i < prodCount; i++) {
+      const text = await prodOptions.nth(i).textContent();
+      if (text?.includes(sku)) {
+        const val = (await prodOptions.nth(i).getAttribute('value')) || '';
+        await productSelect.selectOption(val);
+        break;
+      }
+    }
+    await page.locator('[id^="invoice-quantity-"]').first().fill('2');
+    await page.click('button:has-text("Create invoice")');
+    await expectSuccess(page, 'invoice created');
+
+    // Verify invoice appears in the list
+    await expect(page.locator('.invoice-row', { hasText: ledgerName }).first()).toBeVisible();
+
+    // Search for the ledger name — invoice should still be visible
+    await page.fill('#invoice-search', ledgerName);
+    await expect(page.locator('.invoice-row', { hasText: ledgerName }).first()).toBeVisible();
+
+    // Search for a non-existent name — no invoices should appear
+    await page.fill('#invoice-search', 'ZZZZNONEXISTENT999');
+    await expect(page.locator('.invoice-row')).toHaveCount(0);
+
+    // Clear search — invoice should reappear
+    await page.fill('#invoice-search', '');
+    await expect(page.locator('.invoice-row').first()).toBeVisible();
+  });
+
   test('creates a sales invoice', async ({ authedPage: page }) => {
     const { sku, ledgerName } = await seedInvoiceData(page);
 

@@ -48,8 +48,11 @@ test.describe('Create Invoice from Ledger View', () => {
     await expect(page.locator('h1')).toContainText('Ledger master', { timeout: 10_000 });
     await expectSuccess(page, 'Ledger created');
 
-    // 4. Navigate to ledger view
+    // 4. Navigate to ledger view – use search to find ledger in paginated list
+    await page.fill('#ledger-search', ledgerName);
+    await page.waitForTimeout(500);
     const row = page.locator('.table-row', { hasText: ledgerName });
+    await expect(row).toBeVisible({ timeout: 10_000 });
     await row.locator('button:has-text("View")').click();
     await expect(page.locator('h1')).toContainText(ledgerName, { timeout: 10_000 });
 

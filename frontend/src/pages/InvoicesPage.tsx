@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api, { getApiErrorMessage } from '../api/client';
-import type { CompanyProfile, Invoice, InvoiceCreate, Ledger, LedgerCreate, Product } from '../types/api';
+import type { CompanyProfile, Invoice, InvoiceCreate, Ledger, LedgerCreate, PaginatedInvoices, Product } from '../types/api';
 import InvoicePreview from '../components/InvoicePreview';
 
 type InvoiceFormItem = {
@@ -70,26 +70,35 @@ export default function InvoicesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [invoiceTotalPages, setInvoiceTotalPages] = useState(1);
+  const [invoiceTotal, setInvoiceTotal] = useState(0);
+  const [invoiceSearch, setInvoiceSearch] = useState('');
+  const invoicePageSize = 20;
 
   async function loadInvoicePageData() {
     try {
       setLoading(true);
       setError('');
       const [productsRes, ledgersRes, invoicesRes, companyRes] = await Promise.all([
-        api.get<Product[]>('/products/'),
-        api.get<{ items: Ledger[] }>('/ledgers/', { params: { page_size: 100 } }),
-        api.get<Invoice[]>('/invoices/'),
+        api.get<{ items: Product[] }>('/products/', { params: { page_size: 500 } }),
+        api.get<{ items: Ledger[] }>('/ledgers/', { params: { page_size: 500 } }),
+        api.get<PaginatedInvoices>('/invoices/', {
+          params: { page: invoicePage, page_size: invoicePageSize, search: invoiceSearch },
+        }),
         api.get<CompanyProfile>('/company/'),
       ]);
 
-      setProducts(productsRes.data);
+      setProducts(productsRes.data.items);
       setLedgers(ledgersRes.data.items);
-      setInvoices(invoicesRes.data);
+      setInvoices(invoicesRes.data.items);
+      setInvoiceTotal(invoicesRes.data.total);
+      setInvoiceTotalPages(invoicesRes.data.total_pages);
       setCompany(companyRes.data);
       setSelectedLedgerId((current) => current || String(ledgersRes.data.items[0]?.id ?? ''));
       setItems((current) =>
         current.map((item, index) => {
-          const defaultProduct = productsRes.data[index] ?? productsRes.data[0];
+          const defaultProduct = productsRes.data.items[index] ?? productsRes.data.items[0];
           return {
             ...item,
             productId: item.productId || String(defaultProduct?.id ?? ''),
@@ -106,7 +115,7 @@ export default function InvoicesPage() {
 
   useEffect(() => {
     void loadInvoicePageData();
-  }, []);
+  }, [invoicePage, invoiceSearch]);
 
   const totalAmount = items.reduce((sum, item) => {
     const product = products.find((entry) => entry.id === Number(item.productId));
@@ -343,7 +352,7 @@ export default function InvoicesPage() {
           <h1 className="page-title">Invoice composer</h1>
           <p className="section-copy">Build multi-line invoices against live product pricing and submit directly to the API.</p>
         </div>
-        <div className="status-chip">{invoices.length} invoices listed</div>
+        <div className="status-chip">{invoiceTotal} invoices listed</div>
       </section>
 
       {error ? <div className="status-banner status-banner--error">{error}</div> : null}
@@ -538,6 +547,21 @@ export default function InvoicesPage() {
             </p>
           </div>
 
+          <div className="field">
+            <label htmlFor="invoice-search">Search by ledger name</label>
+            <input
+              id="invoice-search"
+              className="input"
+              type="search"
+              placeholder="Type to search invoices..."
+              value={invoiceSearch}
+              onChange={(e) => {
+                setInvoiceSearch(e.target.value);
+                setInvoicePage(1);
+              }}
+            />
+          </div>
+
           <div className="invoice-list">
             {loading ? (
               <div className="empty-state">
@@ -627,6 +651,30 @@ export default function InvoicesPage() {
                 ))
               : null}
           </div>
+
+          {invoiceTotalPages > 1 ? (
+            <div className="button-row" style={{ justifyContent: 'center', paddingTop: '8px' }}>
+              <button
+                type="button"
+                className="button button--ghost"
+                disabled={invoicePage <= 1}
+                onClick={() => setInvoicePage((p) => p - 1)}
+              >
+                Previous
+              </button>
+              <span className="muted-text" style={{ alignSelf: 'center' }}>
+                Page {invoicePage} of {invoiceTotalPages}
+              </span>
+              <button
+                type="button"
+                className="button button--ghost"
+                disabled={invoicePage >= invoiceTotalPages}
+                onClick={() => setInvoicePage((p) => p + 1)}
+              >
+                Next
+              </button>
+            </div>
+          ) : null}
         </article>
       </section>
 

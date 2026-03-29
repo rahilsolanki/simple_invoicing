@@ -9,6 +9,8 @@ from decimal import Decimal, ROUND_HALF_UP
 
 import weasyprint
 
+from fastapi import Query
+
 from src.db.session import get_db
 from src.models.buyer import Buyer as Ledger
 from src.models.company import CompanyProfile
@@ -16,7 +18,7 @@ from src.models.invoice import Invoice, InvoiceItem
 from src.models.inventory import Inventory
 from src.models.product import Product
 from src.models.user import User
-from src.schemas.invoice import InvoiceCreate, InvoiceOut
+from src.schemas.invoice import InvoiceCreate, InvoiceOut, PaginatedInvoiceOut
 from src.api.deps import get_current_user
 
 router = APIRouter()
@@ -206,18 +208,33 @@ def create_invoice(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("", response_model=list[InvoiceOut], include_in_schema=False)
-@router.get("/", response_model=list[InvoiceOut])
+@router.get("", response_model=PaginatedInvoiceOut, include_in_schema=False)
+@router.get("/", response_model=PaginatedInvoiceOut)
 def list_invoices(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=500),
+    search: str = Query(""),
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
     try:
-        return (
-            db.query(Invoice)
-            .options(joinedload(Invoice.ledger), joinedload(Invoice.items))
+        base = db.query(Invoice)
+        if search.strip():
+            base = base.filter(Invoice.ledger_name.ilike(f"%{search.strip()}%"))
+        total = base.count()
+        items = (
+            base.options(joinedload(Invoice.ledger), joinedload(Invoice.items))
             .order_by(Invoice.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
             .all()
+        )
+        return PaginatedInvoiceOut(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=(total + page_size - 1) // page_size if total > 0 else 1,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

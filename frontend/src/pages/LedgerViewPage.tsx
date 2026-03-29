@@ -64,12 +64,12 @@ export default function LedgerViewPage() {
         const [ledgerRes, companyRes, productsRes] = await Promise.all([
           api.get<Ledger>(`/ledgers/${ledgerId}`),
           api.get<CompanyProfile>('/company/'),
-          api.get<Product[]>('/products/'),
+          api.get<{ items: Product[] }>('/products/', { params: { page_size: 500 } }),
         ]);
         if (cancelled) return;
         setLedger(ledgerRes.data);
         setCompany(companyRes.data);
-        setProducts(productsRes.data);
+        setProducts(productsRes.data.items);
       } catch (err) {
         if (!cancelled) setError(getApiErrorMessage(err, 'Unable to load ledger'));
       } finally {

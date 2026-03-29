@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from src.db.session import get_db
@@ -6,7 +6,7 @@ from src.models.inventory import Inventory
 from src.models.invoice import InvoiceItem
 from src.models.product import Product
 from src.models.user import User, UserRole
-from src.schemas.product import ProductCreate, ProductOut
+from src.schemas.product import PaginatedProductOut, ProductCreate, ProductOut
 from src.api.deps import get_current_user, require_roles
 
 router = APIRouter()
@@ -41,13 +41,32 @@ def create_product(
     return product
 
 
-@router.get("", response_model=list[ProductOut], include_in_schema=False)
-@router.get("/", response_model=list[ProductOut])
+@router.get("", response_model=PaginatedProductOut, include_in_schema=False)
+@router.get("/", response_model=PaginatedProductOut)
 def list_products(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=500),
+    search: str = Query(""),
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
-    return db.query(Product).all()
+    query = db.query(Product)
+    if search.strip():
+        query = query.filter(Product.name.ilike(f"%{search.strip()}%"))
+    total = query.count()
+    items = (
+        query.order_by(Product.name.asc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    return PaginatedProductOut(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size if total > 0 else 1,
+    )
 
 
 @router.put("/{product_id}", response_model=ProductOut)
