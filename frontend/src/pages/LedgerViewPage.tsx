@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api, { getApiErrorMessage } from '../api/client';
 import type { CompanyProfile, Invoice, Ledger, LedgerStatement, PaymentCreate, Product } from '../types/api';
 import InvoicePreview from '../components/InvoicePreview';
+import StatementPreview from '../components/StatementPreview';
 
 function formatCurrency(value: number, currencyCode = 'INR') {
   try {
@@ -51,6 +52,7 @@ export default function LedgerViewPage() {
     notes: '',
   });
   const [submittingPayment, setSubmittingPayment] = useState(false);
+  const [showStatementPreview, setShowStatementPreview] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -218,6 +220,11 @@ export default function LedgerViewPage() {
               <p className="eyebrow">Period statement</p>
               <h2 className="nav-panel__title">Period view</h2>
             </div>
+            {statement && statement.entries.length > 0 ? (
+              <button type="button" className="button button--secondary" onClick={() => setShowStatementPreview(true)}>
+                Preview / PDF
+              </button>
+            ) : null}
           </div>
 
           <div className="field-grid">
@@ -284,6 +291,17 @@ export default function LedgerViewPage() {
           </div>
         </article>
       </section>
+
+      {showStatementPreview && statement ? (
+        <StatementPreview
+          ledger={ledger}
+          statement={statement}
+          company={company}
+          currencyCode={activeCurrencyCode}
+          onClose={() => setShowStatementPreview(false)}
+          onError={(msg) => setError(msg)}
+        />
+      ) : null}
 
       {showPaymentForm ? (
         <div className="modal-overlay" role="dialog" aria-modal="true" onClick={() => setShowPaymentForm(false)}>
