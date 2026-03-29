@@ -4,6 +4,7 @@ import api, { getApiErrorMessage } from '../api/client';
 import type { CompanyProfile, Invoice, Ledger, LedgerStatement, PaymentCreate, Product } from '../types/api';
 import InvoicePreview from '../components/InvoicePreview';
 import StatementPreview from '../components/StatementPreview';
+import CreateInvoiceModal from '../components/CreateInvoiceModal';
 
 function formatCurrency(value: number, currencyCode = 'INR') {
   try {
@@ -53,6 +54,7 @@ export default function LedgerViewPage() {
   });
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [showStatementPreview, setShowStatementPreview] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -184,6 +186,9 @@ export default function LedgerViewPage() {
         </button>
         <button type="button" className="button button--primary" onClick={() => setShowPaymentForm(true)}>
           Record Receipt / Payment
+        </button>
+        <button type="button" className="button button--primary" onClick={() => setShowInvoiceModal(true)}>
+          Create Invoice
         </button>
       </section>
 
@@ -398,6 +403,19 @@ export default function LedgerViewPage() {
           products={products}
           currencyCode={activeCurrencyCode}
           onClose={() => setPreviewInvoice(null)}
+          onError={(msg) => setError(msg)}
+        />
+      ) : null}
+
+      {showInvoiceModal ? (
+        <CreateInvoiceModal
+          preselectedLedgerId={ledgerId}
+          onClose={() => setShowInvoiceModal(false)}
+          onCreated={(msg) => {
+            setShowInvoiceModal(false);
+            setRefreshKey((k) => k + 1);
+            setError('');
+          }}
           onError={(msg) => setError(msg)}
         />
       ) : null}
