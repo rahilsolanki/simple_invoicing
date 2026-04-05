@@ -1,20 +1,7 @@
 import { useEscapeClose } from '../hooks/useEscapeClose';
 import api, { getApiErrorMessage } from '../api/client';
 import type { Invoice, Product } from '../types/api';
-
-function formatCurrency(value: number, currencyCode = 'USD') {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode,
-    }).format(value);
-  } catch {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
-  }
-}
+import formatCurrency from '../utils/formatting';
 
 function getPreviewLineItems(invoice: Invoice, products: Product[]) {
   return (invoice.items || []).map((item) => {

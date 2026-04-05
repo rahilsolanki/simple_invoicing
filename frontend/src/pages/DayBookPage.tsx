@@ -2,20 +2,7 @@ import { useEffect, useState } from 'react';
 import api, { getApiErrorMessage } from '../api/client';
 import StatusToasts from '../components/StatusToasts';
 import type { CompanyProfile, DayBook } from '../types/api';
-
-function formatCurrency(value: number, currencyCode = 'USD') {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode,
-    }).format(value);
-  } catch {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
-  }
-}
+import formatCurrency from '../utils/formatting';
 
 function defaultDateRange() {
   const today = new Date();

@@ -3,20 +3,7 @@ import api, { getApiErrorMessage } from '../api/client';
 import type { CompanyProfile, PaginatedProducts, Product, ProductCreate } from '../types/api';
 import StatusToasts from '../components/StatusToasts';
 import ConfirmDialog from '../components/ConfirmDialog';
-
-function formatCurrency(value: number, currencyCode = 'USD') {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode,
-    }).format(value);
-  } catch {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
-  }
-}
+import formatCurrency from '../utils/formatting';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);

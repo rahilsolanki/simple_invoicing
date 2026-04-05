@@ -2,28 +2,13 @@ import { useEffect, useState } from 'react';
 import api, { getApiErrorMessage } from '../api/client';
 import StatusToasts from '../components/StatusToasts';
 import type { CompanyProfile, InventoryRow, Invoice, Product } from '../types/api';
+import formatCurrency from '../utils/formatting';
 
 type DashboardState = {
   products: Product[];
   inventory: InventoryRow[];
   invoices: Invoice[];
 };
-
-function formatCurrency(value: number, currencyCode = 'USD') {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode,
-      maximumFractionDigits: 2,
-    }).format(value);
-  } catch {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 2,
-    }).format(value);
-  }
-}
 
 export default function DashboardPage() {
   const [state, setState] = useState<DashboardState>({ products: [], inventory: [], invoices: [] });

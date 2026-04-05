@@ -6,20 +6,7 @@ import InvoicePreview from '../components/InvoicePreview';
 import StatementPreview from '../components/StatementPreview';
 import StatusToasts from '../components/StatusToasts';
 import CreateInvoiceModal from '../components/CreateInvoiceModal';
-
-function formatCurrency(value: number, currencyCode = 'INR') {
-  try {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: currencyCode,
-    }).format(value);
-  } catch {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(value);
-  }
-}
+import formatCurrency from '../utils/formatting';
 
 function defaultDateRange() {
   const today = new Date();

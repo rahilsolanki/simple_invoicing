@@ -1,19 +1,6 @@
 import api, { getApiErrorMessage } from '../api/client';
 import type { CompanyProfile, Ledger, LedgerStatement } from '../types/api';
-
-function formatCurrency(value: number, currencyCode = 'INR') {
-  try {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: currencyCode,
-    }).format(value);
-  } catch {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(value);
-  }
-}
+import formatCurrency from '../utils/formatting';
 
 type StatementPreviewProps = {
   ledger: Ledger;

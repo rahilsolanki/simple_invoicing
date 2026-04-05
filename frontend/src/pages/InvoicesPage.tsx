@@ -5,6 +5,7 @@ import InvoicePreview from '../components/InvoicePreview';
 import ConfirmDialog from '../components/ConfirmDialog';
 import StatusToasts from '../components/StatusToasts';
 import { useEscapeClose } from '../hooks/useEscapeClose';
+import formatCurrency from '../utils/formatting';
 
 type InvoiceFormItem = {
   id: number;
@@ -20,20 +21,6 @@ function createItem(id: number, productId = '', unitPrice = ''): InvoiceFormItem
     quantity: '1',
     unit_price: unitPrice,
   };
-}
-
-function formatCurrency(value: number, currencyCode = 'USD') {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode,
-    }).format(value);
-  } catch {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
-  }
 }
 
 export default function InvoicesPage() {

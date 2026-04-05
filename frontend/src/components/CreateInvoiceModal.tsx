@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useEscapeClose } from '../hooks/useEscapeClose';
 import api, { getApiErrorMessage } from '../api/client';
 import type { InvoiceCreate, Ledger, Product } from '../types/api';
+import formatCurrency from '../utils/formatting';
 
 type InvoiceFormItem = {
   id: number;
@@ -12,14 +13,6 @@ type InvoiceFormItem = {
 
 function createItem(id: number, productId = '', unitPrice = ''): InvoiceFormItem {
   return { id, productId, quantity: '1', unit_price: unitPrice };
-}
-
-function formatCurrency(value: number, currencyCode = 'INR') {
-  try {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: currencyCode }).format(value);
-  } catch {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value);
-  }
 }
 
 type CreateInvoiceModalProps = {
